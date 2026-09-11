@@ -5,7 +5,7 @@ st.title("CIVL 6962 Dashboard")
 st.write("11:35 Test")
 
 @st.cache_data
-def load_data():
+def load_data(url):
     return pd.read_parquet(url)
 RAW = "https://github.com/liuvincent818-debug/CIVL-6962-HW1/blob/main/yellow_2024-03.parquet"
 
