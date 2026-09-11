@@ -30,6 +30,6 @@ if "category" in df.columns:
         filtered_df = filtered_df[filtered_df["category"].isin(selected_categories)]
 
 col1 = st.columns(1)
-col1.metric("Total Rows", f"{len(filtered_df):,}")
+col1.metric("Filtered Rows", len(filtered_df))
 
 st.dataframe(filtered_df)
