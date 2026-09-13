@@ -115,23 +115,27 @@ passenger_filter = st.sidebar.multiselect(
 )
 
 # DUCKDB Query 
-if len(date_range) == 2:
-    start_date, end_date = date_range
+# Guardrail: Only run the query if start_date is on or before end_date
+if start_date > end_date:
+    st.sidebar.error("Error: 'Start Date' cannot be after 'End Date'.")
+    st.info("Please adjust your date inputs in the sidebar to view the dashboard.")
 
-    # Convert inputs into SQL-ready conditions
+else:
+    # Build dynamic passenger filter string safely
     pass_str = (
         f"AND passenger_count IN ({','.join(map(str, passenger_filter))})"
         if passenger_filter
         else ""
     )
 
+    # Dynamic SQL Query integrating date range, hour bounds, and time aggregation
     query = f"""
         SELECT 
             DATE_TRUNC('{trunc_unit}', tpep_pickup_datetime) AS time_bucket,
             COUNT(*) AS total_trips,
             AVG(trip_distance) AS avg_distance,
             SUM(total_amount) AS total_revenue
-        FROM '{RAW}'
+        FROM '{RAW_URL}'
         WHERE tpep_pickup_datetime >= '{start_date} 00:00:00'
           AND tpep_pickup_datetime <= '{end_date} 23:59:59'
           AND EXTRACT(HOUR FROM tpep_pickup_datetime) BETWEEN {start_hour} AND {end_hour}
@@ -140,25 +144,42 @@ if len(date_range) == 2:
         ORDER BY time_bucket ASC
     """
 
-    # Run query and pull only the aggregated time-series table into Pandas
+    # Execute query in DuckDB and load only the summary rows into Pandas
     aggregated_df = con.execute(query).df()
 
     # ==========================================
-    # METRICS DISPLAY
+    # METRICS & DISPLAY
     # ==========================================
-    total_trips = aggregated_df["total_trips"].sum()
-    avg_trips_per_period = (
-        aggregated_df["total_trips"].mean() if not aggregated_df.empty else 0
-    )
+    if not aggregated_df.empty:
+        total_trips = aggregated_df["total_trips"].sum()
+        avg_trips = aggregated_df["total_trips"].mean()
+        total_rev = aggregated_df["total_revenue"].sum()
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Total Trips in Selection", f"{total_trips:,}")
-    c2.metric(f"Avg Trips per {time_unit}", f"{int(avg_trips_per_period):,}")
-    c3.metric(
-        "Total Revenue", f"${aggregated_df['total_revenue'].sum():,.2f}"
-    )
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total Trips", f"{total_trips:,}")
+        c2.metric(f"Avg Trips per {time_unit}", f"{int(avg_trips):,}")
+        c3.metric("Total Revenue", f"${total_rev:,.2f}")
 
-    st.divider()
+        st.divider()
+
+        # Render interactive Plotly Chart
+        fig = px.line(
+            aggregated_df,
+            x="time_bucket",
+            y="total_trips",
+            title=f"Trips from {start_date} to {end_date} (Grouped by {time_unit})",
+            labels={
+                "time_bucket": "Time Period",
+                "total_trips": "Trip Count"
+            },
+            markers=True
+        )
+
+        fig.update_layout(hovermode="x unified")
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.warning("No trip records found matching your current filter criteria.")
 
 # Plotly
 if not aggregated_df.empty:
