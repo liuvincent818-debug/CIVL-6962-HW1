@@ -18,7 +18,7 @@ def get_date_bounds():
             MIN(tpep_pickup_datetime)::DATE as min_date,
             MAX(tpep_pickup_datetime)::DATE as max_date
         FROM '{RAW}'
-        WHERE tpep_pickup_datetime >= '2008-01-01'
+        WHERE tpep_pickup_datetime >= '2008-01-01' AND tpep_pickup_datetime <= '2024-12-31'
     """
     df_bounds = con.execute(query).df()
     return df_bounds["min_date"].iloc[0], df_bounds["max_date"].iloc[0]
