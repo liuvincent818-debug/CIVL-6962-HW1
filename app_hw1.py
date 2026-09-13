@@ -180,36 +180,3 @@ else:
 
     else:
         st.warning("No trip records found matching your current filter criteria.")
-
-# Plotly
-if not aggregated_df.empty:
-        fig = px.line(
-            aggregated_df,
-            x="time_bucket",
-            y="total_trips",
-            title=f"Trips Taken over Time (Grouped by {time_unit})",
-            labels={
-                "time_bucket": "Time Period",
-                "total_trips": "Number of Trips",
-            },
-            markers=True,
-        )
-
-        fig.update_layout(
-            hovermode="x unified",
-            xaxis_title="Date / Time",
-            yaxis_title="Trip Volume",
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning("No trips found for the selected date and time range.")
-
-#@st.cache_data
-#def load_data(url):
-#    return pd.read_parquet(url)
-
-#df = load_data(RAW)
-#filtered_df = df.copy()  # Create a copy to apply filters on
-
-#st.dataframe(filtered_df)
