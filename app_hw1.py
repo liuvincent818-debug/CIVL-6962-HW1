@@ -135,7 +135,7 @@ else:
             COUNT(*) AS total_trips,
             AVG(trip_distance) AS avg_distance,
             SUM(total_amount) AS total_revenue
-        FROM '{RAW_URL}'
+        FROM '{RAW}'
         WHERE tpep_pickup_datetime >= '{start_date} 00:00:00'
           AND tpep_pickup_datetime <= '{end_date} 23:59:59'
           AND EXTRACT(HOUR FROM tpep_pickup_datetime) BETWEEN {start_hour} AND {end_hour}
