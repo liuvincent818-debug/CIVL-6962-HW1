@@ -18,6 +18,7 @@ def get_date_bounds():
             MIN(tpep_pickup_datetime)::DATE as min_date,
             MAX(tpep_pickup_datetime)::DATE as max_date
         FROM '{RAW}'
+        WHERE tpep_pickup_datetime >= '2008-01-01'
     """
     df_bounds = con.execute(query).df()
     return df_bounds["min_date"].iloc[0], df_bounds["max_date"].iloc[0]
@@ -28,13 +29,63 @@ st.title("NYC TLC Taxi Trip Volume Analysis")
 # Sidebar Filters
 st.sidebar.header("Filter & Aggregation Options")
 
-# 1. Date Range Selection
-date_range = st.sidebar.date_input(
-    "Select Date Range",
-    value=(min_date, max_date),
-    min_value=min_date,
-    max_value=max_date,
+# Selection Mode Toggle
+date_mode = st.sidebar.radio(
+    "Date Selection Mode",
+    options=["Individual Date Pickers", "Calendar Range Picker"],
+    index=0
 )
+
+# 2. Flexible Date Input Controls
+if date_mode == "Individual Date Pickers":
+    col_start, col_end = st.sidebar.columns(2)
+    with col_start:
+        start_date = st.date_input(
+            "Start Date",
+            value=min_date,
+            min_value=min_date,
+            max_value=max_date
+        )
+    with col_end:
+        end_date = st.date_input(
+            "End Date",
+            value=max_date,
+            min_value=min_date,
+            max_value=max_date
+        )
+else:
+    # Single Range Calendar Input
+    selected_range = st.sidebar.date_input(
+        "Select Date Range",
+        value=(min_date, max_date),
+        min_value=min_date,
+        max_value=max_date
+    )
+    if len(selected_range) == 2:
+        start_date, end_date = selected_range
+    else:
+        start_date, end_date = min_date, max_date
+
+# Validate that Start Date isn't set after End Date
+if start_date > end_date:
+    st.sidebar.error("Error: Start Date must be before or equal to End Date.")
+else:
+    # Rest of your DuckDB query and plotting logic...
+    query = f"""
+        SELECT 
+            DATE_TRUNC('day', tpep_pickup_datetime) AS time_bucket,
+            COUNT(*) AS total_trips
+        FROM '{RAW}'
+        WHERE tpep_pickup_datetime >= '{start_date} 00:00:00'
+          AND tpep_pickup_datetime <= '{end_date} 23:59:59'
+        GROUP BY time_bucket
+        ORDER BY time_bucket ASC
+    """
+    aggregated_df = con.execute(query).df()
+
+    if not aggregated_df.empty:
+        fig = px.line(aggregated_df, x="time_bucket", y="total_trips", title="Trips Over Time")
+        st.plotly_chart(fig, use_container_width=True)
 
 # 2. Time-of-Day Filter (Hours 0 - 23)
 start_hour, end_hour = st.sidebar.slider(
