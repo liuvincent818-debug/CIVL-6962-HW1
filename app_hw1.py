@@ -83,10 +83,6 @@ else:
     """
     aggregated_df = con.execute(query).df()
 
-    if not aggregated_df.empty:
-        fig = px.line(aggregated_df, x="time_bucket", y="total_trips", title="Trips Over Time")
-        st.plotly_chart(fig, use_container_width=True)
-
 # 2. Time-of-Day Filter (Hours 0 - 23)
 start_hour, end_hour = st.sidebar.slider(
     "Filter by Pickup Hour of Day",
