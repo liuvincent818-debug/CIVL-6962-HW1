@@ -164,7 +164,7 @@ pay_query = f"""
 pay_df = con.execute(pay_query).df()
 
     # Query 3: Hourly Demand Distribution (0 - 23 Hours)
-    hourly_query = f"""
+hourly_query = f"""
         SELECT 
             EXTRACT(HOUR FROM tpep_pickup_datetime)::INT AS hour_of_day,
             COUNT(*) AS trip_count
@@ -173,15 +173,15 @@ pay_df = con.execute(pay_query).df()
         GROUP BY hour_of_day
         ORDER BY hour_of_day ASC
     """
-    hourly_df = con.execute(hourly_query).df()
+hourly_df = con.execute(hourly_query).df()
 
     # ==========================================
     # METRICS & DISPLAY
     # ==========================================
-    if not aggregated_df.empty:
-        total_trips = aggregated_df["total_trips"].sum()
-        avg_trips = aggregated_df["total_trips"].mean()
-        total_rev = aggregated_df["total_revenue"].sum()
+    if not ts_df.empty:
+        total_trips = ts_df["total_trips"].sum()
+        avg_trips = ts_df["total_trips"].mean()
+        total_rev = ts_df["total_revenue"].sum()
 
         c1, c2, c3 = st.columns(3)
         c1.metric("Total Trips", f"{total_trips:,}")
