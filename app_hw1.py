@@ -158,7 +158,7 @@ else:
 
         st.divider()
 
-        # Render interactive Plotly Chart
+        # CHART 1: Trip Volume Time Series
         fig = px.line(
             aggregated_df,
             x="time_bucket",
@@ -174,5 +174,52 @@ else:
         fig.update_layout(hovermode="x unified")
         st.plotly_chart(fig, use_container_width=True)
 
+        # CHART 2: Total Revenue Time Series
+        fig_rev = px.line(
+            ts_df, x="time_bucket", y="total_revenue",
+            title=f"2. Total Revenue ($) from {start_date} to {end_date} (Grouped by {time_unit})",
+            labels={"time_bucket": "Time Period", "total_revenue": "Revenue ($)"},
+            markers=True
+        )
+        fig_rev.update_traces(hovertemplate="%{x}<br>Revenue: $%{y:,.2f}")
+        fig_rev.update_layout(hovermode="x unified")
+        st.plotly_chart(fig_rev, use_container_width=True)
+
+        st.divider()
+
+        # SECTION FOR 3rd OPTION CHARTS
+        st.subheader("Supplemental Analytics")
+        col_left, col_right = st.columns(2)
+
+        # CHART 3A: Payment Type Distribution (Donut Chart)
+        with col_left:
+            fig_pay = px.pie(
+                pay_df, values="trip_count", names="payment_method",
+                title="3A. Payment Method Distribution",
+                hole=0.4
+            )
+            fig_pay.update_traces(textinfo="percent+label")
+            st.plotly_chart(fig_pay, use_container_width=True)
+
+        # CHART 3B: Hourly Demand Distribution (Bar Chart)
+        with col_right:
+            fig_hour = px.bar(
+                hourly_df, x="hour_of_day", y="trip_count",
+                title="3B. Demand by Hour of Day (0-23)",
+                labels={"hour_of_day": "Hour (24h)", "trip_count": "Total Trips"},
+            )
+            fig_hour.update_layout(xaxis=dict(tickmode="linear", tick0=0, dtick=2))
+            st.plotly_chart(fig_hour, use_container_width=True)
+
+        # CHART 3C: Average Distance Time Series
+        fig_dist = px.line(
+            ts_df, x="time_bucket", y="avg_distance",
+            title=f"3C. Average Trip Distance (Miles) (Grouped by {time_unit})",
+            labels={"time_bucket": "Time Period", "avg_distance": "Avg Distance (mi)"},
+            markers=True
+        )
+        fig_dist.update_layout(hovermode="x unified")
+        st.plotly_chart(fig_dist, use_container_width=True)
+
     else:
-        st.warning("No trip records found matching your current filter criteria.")
+        st.warning("No records found matching the specified parameters.")
