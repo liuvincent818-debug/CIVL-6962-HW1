@@ -124,24 +124,56 @@ else:
         else ""
     )
 
-    # Dynamic SQL Query integrating date range, hour bounds, and time aggregation
-    query = f"""
-        SELECT 
-            DATE_TRUNC('{trunc_unit}', tpep_pickup_datetime) AS time_bucket,
-            COUNT(*) AS total_trips,
-            AVG(trip_distance) AS avg_distance,
-            SUM(total_amount) AS total_revenue
-        FROM '{RAW}'
+where_clause = f"""
         WHERE tpep_pickup_datetime >= '{start_date} 00:00:00'
           AND tpep_pickup_datetime <= '{end_date} 23:59:59'
           AND EXTRACT(HOUR FROM tpep_pickup_datetime) BETWEEN {start_hour} AND {end_hour}
           {pass_str}
+    """
+
+    # Query 1: Time Series Aggregation (Trips, Revenue, Distance)
+    ts_query = f"""
+        SELECT 
+            DATE_TRUNC('{trunc_unit}', tpep_pickup_datetime) AS time_bucket,
+            COUNT(*) AS total_trips,
+            SUM(total_amount) AS total_revenue,
+            AVG(trip_distance) AS avg_distance
+        FROM '{RAW_URL}'
+        {where_clause}
         GROUP BY time_bucket
         ORDER BY time_bucket ASC
     """
+    ts_df = con.execute(ts_query).df()
 
-    # Execute query in DuckDB and load only the summary rows into Pandas
-    aggregated_df = con.execute(query).df()
+    # Query 2: Payment Type Breakdown
+    pay_query = f"""
+        SELECT 
+            CASE payment_type 
+                WHEN 1 THEN 'Credit Card'
+                WHEN 2 THEN 'Cash'
+                WHEN 3 THEN 'No Charge'
+                WHEN 4 THEN 'Dispute'
+                ELSE 'Unknown'
+            END AS payment_method,
+            COUNT(*) AS trip_count
+        FROM '{RAW_URL}'
+        {where_clause}
+        GROUP BY payment_type
+        ORDER BY trip_count DESC
+    """
+    pay_df = con.execute(pay_query).df()
+
+    # Query 3: Hourly Demand Distribution (0 - 23 Hours)
+    hourly_query = f"""
+        SELECT 
+            EXTRACT(HOUR FROM tpep_pickup_datetime)::INT AS hour_of_day,
+            COUNT(*) AS trip_count
+        FROM '{RAW_URL}'
+        {where_clause}
+        GROUP BY hour_of_day
+        ORDER BY hour_of_day ASC
+    """
+    hourly_df = con.execute(hourly_query).df()
 
     # ==========================================
     # METRICS & DISPLAY
