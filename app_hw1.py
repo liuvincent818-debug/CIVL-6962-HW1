@@ -178,7 +178,7 @@ hourly_df = con.execute(hourly_query).df()
     # ==========================================
     # METRICS & DISPLAY
     # ==========================================
-    if not ts_df.empty:
+if not ts_df.empty:
         total_trips = ts_df["total_trips"].sum()
         avg_trips = ts_df["total_trips"].mean()
         total_rev = ts_df["total_revenue"].sum()
@@ -253,5 +253,5 @@ hourly_df = con.execute(hourly_query).df()
         fig_dist.update_layout(hovermode="x unified")
         st.plotly_chart(fig_dist, use_container_width=True)
 
-    else:
+else:
         st.warning("No records found matching the specified parameters.")
