@@ -132,7 +132,7 @@ where_clause = f"""
     """
 
     # Query 1: Time Series Aggregation (Trips, Revenue, Distance)
-    ts_query = f"""
+ts_query = f"""
         SELECT 
             DATE_TRUNC('{trunc_unit}', tpep_pickup_datetime) AS time_bucket,
             COUNT(*) AS total_trips,
@@ -143,10 +143,10 @@ where_clause = f"""
         GROUP BY time_bucket
         ORDER BY time_bucket ASC
     """
-    ts_df = con.execute(ts_query).df()
+ts_df = con.execute(ts_query).df()
 
     # Query 2: Payment Type Breakdown
-    pay_query = f"""
+pay_query = f"""
         SELECT 
             CASE payment_type 
                 WHEN 1 THEN 'Credit Card'
@@ -161,7 +161,7 @@ where_clause = f"""
         GROUP BY payment_type
         ORDER BY trip_count DESC
     """
-    pay_df = con.execute(pay_query).df()
+pay_df = con.execute(pay_query).df()
 
     # Query 3: Hourly Demand Distribution (0 - 23 Hours)
     hourly_query = f"""
