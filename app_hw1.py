@@ -138,7 +138,7 @@ ts_query = f"""
             COUNT(*) AS total_trips,
             SUM(total_amount) AS total_revenue,
             AVG(trip_distance) AS avg_distance
-        FROM '{RAW_URL}'
+        FROM '{RAW}'
         {where_clause}
         GROUP BY time_bucket
         ORDER BY time_bucket ASC
@@ -156,7 +156,7 @@ pay_query = f"""
                 ELSE 'Unknown'
             END AS payment_method,
             COUNT(*) AS trip_count
-        FROM '{RAW_URL}'
+        FROM '{RAW}'
         {where_clause}
         GROUP BY payment_type
         ORDER BY trip_count DESC
@@ -168,7 +168,7 @@ hourly_query = f"""
         SELECT 
             EXTRACT(HOUR FROM tpep_pickup_datetime)::INT AS hour_of_day,
             COUNT(*) AS trip_count
-        FROM '{RAW_URL}'
+        FROM '{RAW}'
         {where_clause}
         GROUP BY hour_of_day
         ORDER BY hour_of_day ASC
