@@ -25,7 +25,7 @@ def get_date_bounds():
 min_date, max_date = get_date_bounds()
 
 st.title("NYC TLC Taxi Trip Volume Analysis")
-
+st.caption("March 1 - March 31, 2024 | Data Source: NYC TLC Yellow Taxi Trip Records")
 # Sidebar Filters
 st.sidebar.header("Filter & Aggregation Options")
 
@@ -95,12 +95,12 @@ start_hour, end_hour = st.sidebar.slider(
 # 3. Time Grouping Granularity
 time_unit = st.sidebar.selectbox(
     "Aggregate Trips By",
-    options=["Hour", "Day", "Month"],
+    options=["Minute", "Hour", "Day"],
     index=1,  # Default to 'Day'
 )
 
 # Map human-readable option to SQL DATE_TRUNC parameter
-time_unit_map = {"Hour": "hour", "Day": "day", "Month": "month"}
+time_unit_map = {"Minute": "minute", "Hour": "hour", "Day": "day"}
 trunc_unit = time_unit_map[time_unit]
 
 # Optional Category Filter (e.g., Passenger Count)
@@ -178,6 +178,8 @@ hourly_df = con.execute(hourly_query).df()
     # ==========================================
     # METRICS & DISPLAY
     # ==========================================
+show_markers = True if time_unit != "Minute" else False
+
 if not ts_df.empty:
         total_trips = ts_df["total_trips"].sum()
         avg_trips = ts_df["total_trips"].mean()
@@ -200,7 +202,7 @@ if not ts_df.empty:
                 "time_bucket": "Time Period",
                 "total_trips": "Trip Count"
             },
-            markers=True
+            markers=show_markers
         )
 
         fig.update_layout(hovermode="x unified")
@@ -211,7 +213,7 @@ if not ts_df.empty:
             ts_df, x="time_bucket", y="total_revenue",
             title=f"2. Total Revenue ($) from {start_date} to {end_date} (Grouped by {time_unit})",
             labels={"time_bucket": "Time Period", "total_revenue": "Revenue ($)"},
-            markers=True
+            markers=show_markers
         )
         fig_rev.update_traces(hovertemplate="%{x}<br>Revenue: $%{y:,.2f}")
         fig_rev.update_layout(hovermode="x unified")
@@ -248,7 +250,7 @@ if not ts_df.empty:
             ts_df, x="time_bucket", y="avg_distance",
             title=f"3C. Average Trip Distance (Miles) (Grouped by {time_unit})",
             labels={"time_bucket": "Time Period", "avg_distance": "Avg Distance (mi)"},
-            markers=True
+            markers=show_markers
         )
         fig_dist.update_layout(hovermode="x unified")
         st.plotly_chart(fig_dist, use_container_width=True)
