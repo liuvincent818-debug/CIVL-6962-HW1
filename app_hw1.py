@@ -194,7 +194,7 @@ if not ts_df.empty:
 
         # CHART 1: Trip Volume Time Series
         fig = px.line(
-            aggregated_df,
+            ts_df,
             x="time_bucket",
             y="total_trips",
             title=f"Trips from {start_date} to {end_date} (Grouped by {time_unit})",
