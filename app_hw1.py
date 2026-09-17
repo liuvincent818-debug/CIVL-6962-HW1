@@ -27,6 +27,13 @@ min_date, max_date = get_date_bounds()
 st.title("NYC TLC Taxi Trip Volume Analysis")
 st.caption("March 1 - March 31, 2024 | Data Source: NYC TLC Yellow Taxi Trip Records")
 st.warning("This dashboard contains various blind spots and should not be used for conclusions beyond what the charts show. The data only shows yellow taxi trips, which generally operate in the Manhattan area. As such, the data is skewed towards the Manhattan region, and for a better picture of taxi trips in NYC, one should also consider green taxi and other ride-hailing services. The data only displays trips for the month of March, which means that trip distribution throughout the day may not be representative of other months. For example, winter months would have longer periods of darkness, which might affect trip peaks during the day. Unique events, such as holidays, are also not represented in the dataset. The data also only provides the trip length and pick up/drop off zones, which doesn't allow us to determine how the taxis are routing to their destinations. Two trips from the same pick up and drop off zones may have different routes which affects the distance recorded, but such information would not be immediately obvious. Passenger counts are driver reported according to the TLC, so reporting error could cause small shifts in the data being represented.")
+
+st.markdown("""
+### Disclaimer: This dashboard contains various blind spots and should not be used for conclusions beyond what the charts show.
+- Data is only taken for yellow taxi trips, which may not be representative of trips across the city overall. Trends such as trip peak hours, trip distances, and revenue should be drawn with caution.
+- Trip data is only for the month of March, which may not properly represent trip trends in other months. Holidays and differing daylight hours may affect trip trends.
+- While average trip distance is recorded, the data doesn't provide information on routes taken for each trip. Two trips with the same pick up and drop off zones may have different routes, which affects the distance recorded, but such information would not be immediately obvious. Additionally, aggregating trip distance data causes the average to be skewed by outliers, which may not be representative of the majority of trips.
+""")
 # Sidebar Filters
 st.sidebar.header("Filter & Aggregation Options")
 
