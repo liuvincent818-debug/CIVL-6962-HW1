@@ -11,7 +11,7 @@ def get_connection():
     return duckdb.connect(database=":memory:")
 con = get_connection()
 
-@st.cache_data
+@st.cache_data ## Caches the entire parquet file so that it doesn't need to be reloaded on every interaction. A few million entries takes a while to load.
 def get_date_bounds():
     query = f"""
         SELECT 
@@ -26,7 +26,7 @@ min_date, max_date = get_date_bounds()
 
 st.title("NYC TLC Taxi Trip Volume Analysis")
 st.caption("March 1 - March 31, 2024 | Data Source: NYC TLC Yellow Taxi Trip Records")
-st.warning("This dashboard contains various blind spots and should not be used for conclusions beyond what the charts show. The data only shows yellow taxi trips, which generally operate in the Manhattan area. As such, the data is skewed towards the Manhattan region, and for a better picture of taxi trips in NYC, one should also consider green taxi and other ride-hailing services. The data only displays trips for the month of March, which means that trip distribution throughout the day may not be representative of other months. For example, winter months would have longer periods of darkness, which might affect trip peaks during the day. Unique events, such as holidays, are also not represented in the dataset. The data also only provides the trip length and pick up/drop off zones, which doesn't allow us to determine how the taxis are routing to their destinations. Two trips from the same pick up and drop off zones may have different routes which affects the distance recorded, but such information would not be immediately obvious. Passenger counts are driver reported according to the TLC, so reporting error could cause small shifts in the data being represented.")
+st.caption("Data was collected by TLC technology providers using equipment within the taxi.")
 
 st.markdown("""
 ### Disclaimer: This dashboard contains various blind spots and should not be used for conclusions beyond what the charts show.
@@ -34,6 +34,9 @@ st.markdown("""
 - Trip data is only for the month of March, which may not properly represent trip trends in other months. Holidays and differing daylight hours may affect trip trends.
 - While average trip distance is recorded, the data doesn't provide information on routes taken for each trip. Two trips with the same pick up and drop off zones may have different routes, which affects the distance recorded, but such information would not be immediately obvious. Additionally, aggregating trip distance data causes the average to be skewed by outliers, which may not be representative of the majority of trips.
 """)
+
+st.warning("This dashboard was coded with the help of Gemini AI.")
+
 # Sidebar Filters
 st.sidebar.header("Filter & Aggregation Options")
 
@@ -89,7 +92,6 @@ else:
         GROUP BY time_bucket
         ORDER BY time_bucket ASC
     """
-    aggregated_df = con.execute(query).df()
 
 # 2. Time-of-Day Filter (Hours 0 - 23)
 start_hour, end_hour = st.sidebar.slider(
@@ -118,7 +120,11 @@ passenger_filter = st.sidebar.multiselect(
     default=[1, 2, 3, 4, 5, 6],
 )
 
-# DUCKDB Query 
+
+# ==========================================
+# # DUCKDB QUERY
+# ==========================================
+
 # Guardrail: Only run the query if start_date is on or before end_date
 if start_date > end_date:
     st.sidebar.error("Error: 'Start Date' cannot be after 'End Date'.")
@@ -139,7 +145,7 @@ where_clause = f"""
           {pass_str}
     """
 
-    # Query 1: Time Series Aggregation (Trips, Revenue, Distance)
+# Query 1: Time Series Aggregation (Trips, Revenue, Distance)
 ts_query = f"""
         SELECT 
             DATE_TRUNC('{trunc_unit}', tpep_pickup_datetime) AS time_bucket,
@@ -153,7 +159,7 @@ ts_query = f"""
     """
 ts_df = con.execute(ts_query).df()
 
-    # Query 2: Payment Type Breakdown
+# Query 2: Payment Type Breakdown
 pay_query = f"""
         SELECT 
             CASE payment_type 
@@ -171,7 +177,7 @@ pay_query = f"""
     """
 pay_df = con.execute(pay_query).df()
 
-    # Query 3: Hourly Demand Distribution (0 - 23 Hours)
+# Query 3: Hourly Demand Distribution (0 - 23 Hours)
 hourly_query = f"""
         SELECT 
             EXTRACT(HOUR FROM tpep_pickup_datetime)::INT AS hour_of_day,
@@ -183,9 +189,9 @@ hourly_query = f"""
     """
 hourly_df = con.execute(hourly_query).df()
 
-    # ==========================================
-    # METRICS & DISPLAY
-    # ==========================================
+# ==========================================
+# METRICS & DISPLAY
+# ==========================================
 show_markers = True if time_unit != "Minute" else False
 
 if not ts_df.empty:
